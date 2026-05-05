@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static ru.yandex.practicum.filmorate.validator.FilmValidator.MAX_DESCRIPTION_LENGTH;
 import static ru.yandex.practicum.filmorate.validator.FilmValidator.MIN_RELEASE_DATE;
 
-class FilmValidatorTest {
+public class FilmValidatorTest {
 
     @Test
-    void testEmptyName() {
+    public void testEmptyName() {
         Film film = new Film();
         film.setName("");
         film.setDescription("Описание");
@@ -31,7 +31,7 @@ class FilmValidatorTest {
     }
 
     @Test
-    void testDescriptionTooLong() {
+    public void testDescriptionTooLong() {
         Film film = new Film();
         film.setName("Название");
         film.setDescription("A".repeat(201));
@@ -48,7 +48,7 @@ class FilmValidatorTest {
     }
 
     @Test
-    void testReleaseDateTooEarly() {
+    public void testReleaseDateTooEarly() {
         Film film = new Film();
         film.setName("Название");
         film.setDescription("Описание");
@@ -64,7 +64,7 @@ class FilmValidatorTest {
     }
 
     @Test
-    void testDurationZero() {
+    public void testDurationZero() {
         Film film = new Film();
         film.setName("Название");
         film.setDescription("Описание");
@@ -80,7 +80,7 @@ class FilmValidatorTest {
     }
 
     @Test
-    void testValidFilm() {
+    public void testValidFilm() {
         Film film = new Film();
         film.setName("Название");
         film.setDescription("Описание");

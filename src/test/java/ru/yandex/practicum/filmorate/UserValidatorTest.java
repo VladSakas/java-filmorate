@@ -10,10 +10,10 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class UserValidatorTest {
+public class UserValidatorTest {
 
     @Test
-    void testEmptyEmail() {
+    public void testEmptyEmail() {
         User user = new User();
         user.setEmail("");
         user.setLogin("login");
@@ -28,7 +28,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void testEmailWithoutAt() {
+    public void testEmailWithoutAt() {
         User user = new User();
         user.setEmail("usermail.com");
         user.setLogin("login");
@@ -43,7 +43,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void testEmptyLogin() {
+    public void testEmptyLogin() {
         User user = new User();
         user.setEmail("user@mail.com");
         user.setLogin("");
@@ -58,7 +58,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void testLoginWithSpaces() {
+    public void testLoginWithSpaces() {
         User user = new User();
         user.setEmail("user@mail.com");
         user.setLogin("user name");
@@ -73,7 +73,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void testBirthdayInFuture() {
+    public void testBirthdayInFuture() {
         User user = new User();
         user.setEmail("user@mail.com");
         user.setLogin("login");
@@ -88,7 +88,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void testValidUser() {
+    public void testValidUser() {
         User user = new User();
         user.setEmail("user@mail.com");
         user.setLogin("login");
