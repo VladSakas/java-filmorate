@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.validator.UserValidator;
 
@@ -22,22 +21,13 @@ public class UserController {
     public User create(@RequestBody User user) {
         log.info("Создание пользователя: {}", user);
 
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-
-        try {
-            UserValidator.validate(user);
-        } catch (ValidationException e) {
-            log.warn("Ошибка валидации при создании пользователя: {}", e.getMessage());
-            throw e;
-        }
+        UserValidator.normalizeName(user);
+        UserValidator.validate(user);
 
         user.setId(getNextId());
         users.put(user.getId(), user);
 
-        log.info("Пользователь успешно создан: id={}, email={}, login={}",
-                user.getId(), user.getEmail(), user.getLogin());
+        log.info("Пользователь успешно создан: {}", user);
 
         return user;
     }
@@ -56,21 +46,11 @@ public class UserController {
             throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
         }
 
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.info("Пустое имя пользователя id={} заменено на логин: {}", user.getId(), user.getLogin());
-        }
+        UserValidator.normalizeName(user);
+        UserValidator.validate(user);
 
-        try {
-            UserValidator.validate(user);
-        } catch (ValidationException e) {
-            log.warn("Ошибка валидации при обновлении пользователя id={}: {}", user.getId(), e.getMessage());
-            throw e;
-        }
-
-        log.info("Данные пользователя успешно обновлены: id={}, email={}, login={}",
-                user.getId(), user.getEmail(), user.getLogin());
         users.put(user.getId(), user);
+        log.info("Данные пользователя успешно обновлены: {}", user);
 
         return user;
     }
