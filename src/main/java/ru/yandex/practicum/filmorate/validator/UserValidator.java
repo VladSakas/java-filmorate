@@ -1,12 +1,14 @@
 package ru.yandex.practicum.filmorate.validator;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 
 @Slf4j
+@Component
 public class UserValidator {
     public static void validate(User user) {
 
@@ -43,4 +45,5 @@ public class UserValidator {
             log.info("Пустое имя пользователя заменено на логин: {}", user.getLogin());
         }
     }
+
 }
