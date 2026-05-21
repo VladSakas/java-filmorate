@@ -1,27 +1,24 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.UserValidator;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
-
-    public User add(@RequestBody User user) {
+    public User add(User user) {
         log.info("Создание пользователя: {}", user);
 
         UserValidator.normalizeName(user);
@@ -33,12 +30,16 @@ public class UserService {
         return savedUser;
     }
 
-    public User update(@RequestBody User user) {
+    public User update(User user) {
         log.info("Обновление данных пользователя: {}", user);
 
         if (user.getId() == null) {
             log.warn("При обновлении данных пользователя не указан id");
             throw new ConditionsNotMetException("Id должен быть указан");
+        }
+
+        if (userStorage.getById(user.getId()).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
         }
 
         UserValidator.normalizeName(user);
@@ -53,6 +54,11 @@ public class UserService {
         Collection<User> users = userStorage.getAll();
         log.debug("Запрос всех пользователей, найдено: {}", users.size());
         return users;
+    }
+
+    public User getById(Long id) {
+        return userStorage.getById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
     }
 
     public void addFriend(Long userId, Long friendId) {
@@ -77,25 +83,19 @@ public class UserService {
     public Collection<User> getFriends(Long userId) {
         User user = getUserOrThrow(userId);
 
-        Collection<User> friends = new ArrayList<>();
-        for (Long friendsId : user.getFriends()) {
-            friends.add(getUserOrThrow(friendsId));
-        }
-        return friends;
+        return user.getFriends().stream()
+                .map(this::getUserOrThrow)
+                .collect(Collectors.toList());
     }
 
     public Collection<User> getCommonFriends(Long userId, Long friendId) {
         User user = getUserOrThrow(userId);
         User friend = getUserOrThrow(friendId);
 
-        Collection<User> commonFriends = new ArrayList<>();
-
-        for (Long friendsId : user.getFriends()) {
-            if (friend.getFriends().contains(friendsId)) {
-                commonFriends.add(getUserOrThrow(friendsId));
-            }
-        }
-        return commonFriends;
+        return user.getFriends().stream()
+                .filter(friend.getFriends()::contains)
+                .map(this::getUserOrThrow)
+                .collect(Collectors.toList());
     }
 
     private User getUserOrThrow(Long userId) {

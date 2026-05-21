@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -14,14 +15,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    public FilmService(final FilmStorage filmStorage, final UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
 
     public Film add(Film film) {
         log.info("Добавление фильма: {}", film);
@@ -39,11 +36,20 @@ public class FilmService {
             throw new ConditionsNotMetException("Id должен быть указан");
         }
 
+        if (filmStorage.getById(film.getId()).isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
+        }
+
         FilmValidator.validate(film);
         Film updatedFilm = filmStorage.update(film);
 
         log.info("Фильм успешно обновлён: {}", updatedFilm);
         return updatedFilm;
+    }
+
+    public Film getById(Long id) {
+        return filmStorage.getById(id)
+                .orElseThrow(() -> new NotFoundException("Фильм не найден"));
     }
 
     public Collection<Film> getAll() {

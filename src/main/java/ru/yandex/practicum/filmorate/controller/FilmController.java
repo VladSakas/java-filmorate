@@ -1,25 +1,18 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-
 import java.util.Collection;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/films")
 public class FilmController {
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
-
-    public FilmController(FilmStorage filmStorage, FilmService filmService) {
-        this.filmStorage = filmStorage;
-        this.filmService = filmService;
-    }
 
     @PostMapping
     public Film add(@RequestBody Film film) {
@@ -38,8 +31,7 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film get(@PathVariable Long id) {
-        return filmStorage.getById(id)
-                .orElseThrow(() -> new NotFoundException("Фильм не найден"));
+        return filmService.getById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
