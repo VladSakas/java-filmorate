@@ -21,6 +21,11 @@ public class FilmService {
     private final UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
 
+    private static final String CHECK_MPA_EXISTS_QUERY =
+            "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?";
+    private static final String CHECK_GENRE_EXISTS_QUERY =
+            "SELECT COUNT(*) FROM genres WHERE id = ?";
+
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
                        @Qualifier("userDbStorage") UserStorage userStorage,
                        JdbcTemplate jdbcTemplate) {
@@ -34,7 +39,7 @@ public class FilmService {
 
         if (film.getMpa() != null && film.getMpa().getId() > 0) {
             Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?",
+                    CHECK_MPA_EXISTS_QUERY,
                     Integer.class,
                     film.getMpa().getId()
             );
@@ -46,7 +51,7 @@ public class FilmService {
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
                 Integer count = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM genres WHERE id = ?",
+                        CHECK_GENRE_EXISTS_QUERY,
                         Integer.class,
                         genre.getId()
                 );
@@ -76,7 +81,7 @@ public class FilmService {
 
         if (film.getMpa() != null && film.getMpa().getId() > 0) {
             Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?",
+                    CHECK_MPA_EXISTS_QUERY,
                     Integer.class,
                     film.getMpa().getId()
             );
@@ -88,7 +93,7 @@ public class FilmService {
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
                 Integer count = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM genres WHERE id = ?",
+                        CHECK_GENRE_EXISTS_QUERY,
                         Integer.class,
                         genre.getId()
                 );
@@ -114,22 +119,6 @@ public class FilmService {
         Collection<Film> films = filmStorage.getAll();
         log.debug("Запрос всех фильмов, найдено: {} фильмов", films.size());
         return films;
-    }
-
-    public void addLike(Long filmId, Long userId) {
-        if (filmStorage.getById(filmId).isEmpty()) {
-            throw new NotFoundException("Фильм не найден");
-        }
-        if (userStorage.getById(userId).isEmpty()) {
-            throw new NotFoundException("Пользователь не найден");
-        }
-        filmStorage.addLike(filmId, userId);
-        log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
-    }
-
-    public void removeLike(Long filmId, Long userId) {
-        filmStorage.removeLike(filmId, userId);
-        log.info("Пользователь {} убрал лайк с фильма {}", userId, filmId);
     }
 
     public Collection<Film> getTopFilms(int count) {
