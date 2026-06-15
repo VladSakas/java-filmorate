@@ -1,27 +1,61 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.FilmValidator;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final JdbcTemplate jdbcTemplate;
+
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       @Qualifier("userDbStorage") UserStorage userStorage,
+                       JdbcTemplate jdbcTemplate) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public Film add(Film film) {
         log.info("Добавление фильма: {}", film);
+
+        if (film.getMpa() != null && film.getMpa().getId() > 0) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?",
+                    Integer.class,
+                    film.getMpa().getId()
+            );
+            if (count == null || count == 0) {
+                throw new NotFoundException("MPA с id " + film.getMpa().getId() + " не найден");
+            }
+        }
+
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                Integer count = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM genres WHERE id = ?",
+                        Integer.class,
+                        genre.getId()
+                );
+                if (count == null || count == 0) {
+                    throw new NotFoundException("Жанр с id " + genre.getId() + " не найден");
+                }
+            }
+        }
+
         FilmValidator.validate(film);
         Film savedFilm = filmStorage.add(film);
         log.info("Фильм успешно добавлен: {}", savedFilm);
@@ -38,6 +72,30 @@ public class FilmService {
 
         if (filmStorage.getById(film.getId()).isEmpty()) {
             throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
+        }
+
+        if (film.getMpa() != null && film.getMpa().getId() > 0) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?",
+                    Integer.class,
+                    film.getMpa().getId()
+            );
+            if (count == null || count == 0) {
+                throw new NotFoundException("MPA с id " + film.getMpa().getId() + " не найден");
+            }
+        }
+
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                Integer count = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM genres WHERE id = ?",
+                        Integer.class,
+                        genre.getId()
+                );
+                if (count == null || count == 0) {
+                    throw new NotFoundException("Жанр с id " + genre.getId() + " не найден");
+                }
+            }
         }
 
         FilmValidator.validate(film);
@@ -59,38 +117,22 @@ public class FilmService {
     }
 
     public void addLike(Long filmId, Long userId) {
-        Film film = getFilmOrThrow(filmId);
-        validateUserExists(userId);
-
-        if (film.getLikes().contains(userId)) {
-            throw new IllegalArgumentException("Фильм можно лайкнуть только один раз!");
+        if (filmStorage.getById(filmId).isEmpty()) {
+            throw new NotFoundException("Фильм не найден");
         }
-
-        film.getLikes().add(userId);
-        log.info("Пользователь {} ставит лайк фильму {}", userId, filmId);
+        if (userStorage.getById(userId).isEmpty()) {
+            throw new NotFoundException("Пользователь не найден");
+        }
+        filmStorage.addLike(filmId, userId);
+        log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
-        Film film = getFilmOrThrow(filmId);
-        validateUserExists(userId);
-        film.getLikes().remove(userId);
-        log.info("Пользователю {} больше не нравится фильм {}", userId, filmId);
+        filmStorage.removeLike(filmId, userId);
+        log.info("Пользователь {} убрал лайк с фильма {}", userId, filmId);
     }
 
     public Collection<Film> getTopFilms(int count) {
-        return filmStorage.getAll().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
-    }
-
-    private void validateUserExists(Long userId) {
-        userStorage.getById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователя не существует"));
-    }
-
-    private Film getFilmOrThrow(Long filmId) {
-        return filmStorage.getById(filmId)
-                .orElseThrow(() -> new NotFoundException("Фильм не найден"));
+        return filmStorage.getTopFilms(count);
     }
 }
