@@ -15,11 +15,9 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -168,5 +166,49 @@ class FilmDbStorageTest {
         assertThat(found.get().getMpa()).isNotNull();
         assertThat(found.get().getMpa().getId()).isEqualTo(1);
         assertThat(found.get().getGenres()).isNotEmpty();
+    }
+
+    @Test
+    void testFilmGetCommon() {
+        Film film1 = createTestFilm("Common Film 1");
+        Film savedFilm1 = filmStorage.add(film1);
+
+        Film film2 = createTestFilm("Common Film 2");
+        Film savedFilm2 = filmStorage.add(film2);
+
+        Film film3 = createTestFilm("Unique Film");
+        Film savedFilm3 = filmStorage.add(film3);
+
+        User user2 = new User();
+        user2.setEmail("user2@example.com");
+        user2.setLogin("user2");
+        user2.setName("User Two");
+        user2.setBirthday(LocalDate.of(1995, 1, 1));
+        User savedUser2 = userStorage.add(user2);
+        Long user2Id = savedUser2.getId();
+
+        filmStorage.addLike(savedFilm1.getId(), testUserId);
+        filmStorage.addLike(savedFilm1.getId(), user2Id);
+
+        filmStorage.addLike(savedFilm2.getId(), testUserId);
+        filmStorage.addLike(savedFilm2.getId(), user2Id);
+
+        filmStorage.addLike(savedFilm3.getId(), testUserId);
+
+        List<Film> commonFilms = filmStorage.getCommonFilms(testUserId.intValue(), user2Id.intValue());
+
+        assertThat(commonFilms).hasSize(2);
+
+        Set<Long> commonFilmIds = commonFilms.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+        assertThat(commonFilmIds).contains(savedFilm1.getId(), savedFilm2.getId());
+
+        assertThat(commonFilmIds).doesNotContain(savedFilm3.getId());
+
+        Set<String> commonFilmNames = commonFilms.stream()
+                .map(Film::getName)
+                .collect(Collectors.toSet());
+        assertThat(commonFilmNames).contains("Common Film 1", "Common Film 2");
     }
 }
