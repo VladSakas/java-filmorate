@@ -126,7 +126,7 @@ public class FilmService {
         return filmStorage.getTopFilms(count);
     }
 
-    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
         log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
     }

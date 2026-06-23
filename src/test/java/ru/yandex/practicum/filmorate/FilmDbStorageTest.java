@@ -195,7 +195,7 @@ class FilmDbStorageTest {
 
         filmStorage.addLike(savedFilm3.getId(), testUserId);
 
-        List<Film> commonFilms = filmStorage.getCommonFilms(testUserId.intValue(), user2Id.intValue());
+        List<Film> commonFilms = filmStorage.getCommonFilms(testUserId, user2Id);
 
         assertThat(commonFilms).hasSize(2);
 

@@ -178,7 +178,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_QUERY, this::mapRowToFilm, userId, friendId);
         for (Film film : films) {
             loadGenres(film);
