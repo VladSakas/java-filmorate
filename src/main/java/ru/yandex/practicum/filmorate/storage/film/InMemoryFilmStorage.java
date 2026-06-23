@@ -80,8 +80,11 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        Long userIdLong = userId.longValue();
+        Long friendIdLong = friendId.longValue();
+
         return films.values().stream()
-                .filter(film -> film.getLikes().contains(userId) && film.getLikes().contains(friendId))
+                .filter(film -> film.getLikes().contains(userIdLong) && film.getLikes().contains(friendIdLong))
                 .collect(Collectors.toList());
     }
 
