@@ -40,7 +40,7 @@ public class UserDbStorage implements UserStorage {
             "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
     private static final String GET_FRIENDS_QUERY =
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
-    private static final String GET_COMMON_FRIENDS_QUERY = """ 
+    private static final String GET_COMMON_FRIENDS_QUERY = """
             SELECT u.* FROM users u
             JOIN friends f1 ON u.id = f1.friend_id AND f1.user_id = ?
             JOIN friends f2 ON u.id = f2.friend_id AND f2.user_id = ?
