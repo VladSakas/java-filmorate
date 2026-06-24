@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.FilmValidator;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -123,5 +124,10 @@ public class FilmService {
 
     public Collection<Film> getTopFilms(int count) {
         return filmStorage.getTopFilms(count);
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 }

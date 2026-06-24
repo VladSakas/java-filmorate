@@ -47,6 +47,16 @@ public class FilmDbStorage implements FilmStorage {
                     "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
     private static final String REMOVE_FILM_QUERY =
             "DELETE FROM films WHERE id = ?";
+    private static final String GET_COMMON_FILMS_QUERY = """
+            SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
+                    FROM films f
+                    LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+                    JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
+                    JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
+                    LEFT JOIN likes l ON f.id = l.film_id
+                    GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
+            ORDER BY likes_count DESC
+            """;
 
     @Override
     public Film add(Film film) {
@@ -160,6 +170,16 @@ public class FilmDbStorage implements FilmStorage {
 
     public Collection<Film> getTopFilms(int count) {
         List<Film> films = jdbc.query(GET_TOP_FILMS_QUERY, this::mapRowToFilm, count);
+        for (Film film : films) {
+            loadGenres(film);
+            loadLikes(film);
+        }
+        return films;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> films = jdbc.query(GET_COMMON_FILMS_QUERY, this::mapRowToFilm, userId, friendId);
         for (Film film : films) {
             loadGenres(film);
             loadLikes(film);
