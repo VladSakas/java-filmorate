@@ -49,13 +49,21 @@ public class FilmDbStorage implements FilmStorage {
             "DELETE FROM films WHERE id = ?";
     private static final String GET_COMMON_FILMS_QUERY = """
             SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
-                    FROM films f
-                    LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
-                    JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
-                    JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
-                    LEFT JOIN likes l ON f.id = l.film_id
-                    GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
+            FROM films f
+            LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+            JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
+            JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
+            LEFT JOIN likes l ON f.id = l.film_id
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
             ORDER BY likes_count DESC
+            """;
+    private static final String FIND_RECOMMENDATIONS_QUERY = """
+                SELECT f.*, m.id as mpa_id, m.name as mpa_name
+                FROM films f
+                LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+                JOIN likes l ON f.id = l.film_id
+                WHERE l.user_id = ?
+                AND f.id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)
             """;
 
     @Override
@@ -160,14 +168,17 @@ public class FilmDbStorage implements FilmStorage {
         film.getLikes().addAll(likes);
     }
 
+    @Override
     public void addLike(Long filmId, Long userId) {
         jdbc.update(ADD_LIKE_QUERY, filmId, userId);
     }
 
+    @Override
     public void removeLike(Long filmId, Long userId) {
         jdbc.update(REMOVE_LIKE_QUERY, filmId, userId);
     }
 
+    @Override
     public Collection<Film> getTopFilms(int count) {
         List<Film> films = jdbc.query(GET_TOP_FILMS_QUERY, this::mapRowToFilm, count);
         for (Film film : films) {
@@ -180,6 +191,16 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_QUERY, this::mapRowToFilm, userId, friendId);
+        for (Film film : films) {
+            loadGenres(film);
+            loadLikes(film);
+        }
+        return films;
+    }
+
+    @Override
+    public List<Film> findRecommendationsForUser(Long userId, Long matchUserId) {
+        List<Film> films = jdbc.query(FIND_RECOMMENDATIONS_QUERY, this::mapRowToFilm, matchUserId, userId);
         for (Film film : films) {
             loadGenres(film);
             loadLikes(film);

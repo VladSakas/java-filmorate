@@ -85,4 +85,8 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Film> findRecommendationsForUser(Long userId, Long matchUserId) {
+        return Collections.emptyList();
+    }
 }

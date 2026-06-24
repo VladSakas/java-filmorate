@@ -23,4 +23,6 @@ public interface UserStorage {
     Collection<User> getFriends(Long userId);
 
     Collection<User> getCommonFriends(Long userId, Long otherId);
+
+    Optional<Long> findBestMatchUserId(Long userId);
 }
