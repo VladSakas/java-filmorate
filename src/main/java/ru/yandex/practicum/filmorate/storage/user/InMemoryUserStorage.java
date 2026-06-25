@@ -96,4 +96,9 @@ public class InMemoryUserStorage implements UserStorage {
                 .orElse(0);
         return ++currentMaxId;
     }
+
+    @Override
+    public Optional<Long> findBestMatchUserId(Long userId) {
+        return Optional.empty();
+    }
 }
