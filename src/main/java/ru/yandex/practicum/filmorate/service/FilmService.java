@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -122,8 +123,12 @@ public class FilmService {
         return films;
     }
 
-    public Collection<Film> getTopFilms(int count) {
-        return filmStorage.getTopFilms(count);
+    public Collection<Film> getTopFilms(int count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            log.warn("Запрос популярных фильмов: count={} не положительное число", count);
+            throw new ValidationException("Количество фильмов должно быть положительным числом");
+        }
+        return filmStorage.getTopFilms(count, genreId, year);
     }
 
     public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {

@@ -140,7 +140,7 @@ class FilmDbStorageTest {
         User savedUser2 = userStorage.add(user2);
         filmStorage.addLike(savedPopular.getId(), savedUser2.getId());
 
-        Collection<Film> topFilms = filmStorage.getTopFilms(1);
+        Collection<Film> topFilms = filmStorage.getTopFilms(1, null, null);
         assertThat(topFilms).hasSize(1);
         assertThat(topFilms.iterator().next().getName()).isEqualTo("Popular Film");
     }
