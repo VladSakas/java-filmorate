@@ -43,8 +43,7 @@ public class FilmDbStorage implements FilmStorage {
     private static final String GET_TOP_FILMS_QUERY =
             "SELECT f.*, m.id as mpa_id, m.name as mpa_name FROM films f " +
                     "LEFT JOIN mpa_ratings m ON f.mpa_id = m.id " +
-                    "LEFT JOIN likes l ON f.id = l.film_id " +
-                    "GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+                    "LEFT JOIN likes l ON f.id = l.film_id ";
     private static final String REMOVE_FILM_QUERY =
             "DELETE FROM films WHERE id = ?";
     private static final String GET_COMMON_FILMS_QUERY = """
@@ -168,8 +167,34 @@ public class FilmDbStorage implements FilmStorage {
         jdbc.update(REMOVE_LIKE_QUERY, filmId, userId);
     }
 
-    public Collection<Film> getTopFilms(int count) {
-        List<Film> films = jdbc.query(GET_TOP_FILMS_QUERY, this::mapRowToFilm, count);
+    public Collection<Film> getTopFilms(int count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder(GET_TOP_FILMS_QUERY);
+        List<Object> params = new ArrayList<>();
+
+        if (genreId != null) {
+            sql.append(" LEFT JOIN film_genres fg ON f.id = fg.film_id ");
+        }
+
+        List<String> conditions = new ArrayList<>();
+
+        if (year != null) {
+            conditions.add(" YEAR(f.release_date) = ? ");
+            params.add(year);
+        }
+
+        if (genreId != null) {
+            conditions.add(" fg.genre_id = ? ");
+            params.add(genreId);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+
+        sql.append(" GROUP BY f.id, m.id, m.name ORDER BY COUNT(l.user_id) DESC LIMIT ?");
+        params.add(count);
+
+        List<Film> films = jdbc.query(sql.toString(), this::mapRowToFilm, params.toArray());
         for (Film film : films) {
             loadGenres(film);
             loadLikes(film);
