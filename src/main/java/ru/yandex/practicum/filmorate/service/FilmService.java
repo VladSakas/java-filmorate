@@ -124,4 +124,14 @@ public class FilmService {
     public Collection<Film> getTopFilms(int count) {
         return filmStorage.getTopFilms(count);
     }
+
+    public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Получение фильмов режиссёра: directorId={}, sortBy={}", directorId, sortBy);
+        if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
+            log.warn("Некорректный sortBy: {}", sortBy);
+        }
+        Collection<Film> films = filmStorage.getFilmsByDirector(directorId, sortBy);
+        log.info("Найдено фильмов режиссёра {}: {}", directorId, films.size());
+        return films;
+    }
 }
