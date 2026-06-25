@@ -82,5 +82,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
         return List.of();
     }
+  
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return films.values().stream()
+                .filter(film -> film.getLikes().contains(userId) && film.getLikes().contains(friendId))
+                .collect(Collectors.toList());
+    }
 
 }
