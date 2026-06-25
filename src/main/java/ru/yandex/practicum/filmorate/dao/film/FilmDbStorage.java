@@ -223,7 +223,7 @@ public class FilmDbStorage implements FilmStorage {
         }
         return films;
     }
-  
+
     private void loadDirectors(Film film) {
         List<Director> directors = jdbc.query(LOAD_DIRECTORS_QUERY, (rs, rowNum) -> {
             Director director = new Director();
@@ -246,7 +246,7 @@ public class FilmDbStorage implements FilmStorage {
                 }
         );
     }
-  
+
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_QUERY, this::mapRowToFilm, userId, friendId);
         for (Film film : films) {

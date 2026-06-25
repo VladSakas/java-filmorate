@@ -135,7 +135,7 @@ public class FilmService {
         log.info("Найдено фильмов режиссёра {}: {}", directorId, films.size());
         return films;
     }
-  
+
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
