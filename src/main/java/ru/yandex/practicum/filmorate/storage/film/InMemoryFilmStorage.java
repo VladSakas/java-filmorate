@@ -98,5 +98,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     public void delete(Long id) {
         films.remove(id);
         log.debug("Фильм c id = {} удалён", id);
+      
+    public List<Film> searchFilms(String query, List<String> by) {
+        return List.of();
     }
 }
