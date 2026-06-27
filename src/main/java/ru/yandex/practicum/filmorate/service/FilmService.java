@@ -131,6 +131,16 @@ public class FilmService {
         return filmStorage.getTopFilms(count, genreId, year);
     }
 
+    public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.info("Получение фильмов режиссёра: directorId={}, sortBy={}", directorId, sortBy);
+        if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
+            log.warn("Некорректный sortBy: {}", sortBy);
+        }
+        Collection<Film> films = filmStorage.getFilmsByDirector(directorId, sortBy);
+        log.info("Найдено фильмов режиссёра {}: {}", directorId, films.size());
+        return films;
+    }
+
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
