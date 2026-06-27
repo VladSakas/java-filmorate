@@ -160,7 +160,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void delete(Long id) {
-        String sql = "DELETE FROM users WHERE id = ?";
+        String sql = REMOVE_QUERY;
         jdbc.update(sql, id);
     }
 }
