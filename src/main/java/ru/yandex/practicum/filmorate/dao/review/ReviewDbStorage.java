@@ -41,7 +41,6 @@ public class ReviewDbStorage implements ReviewStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
-            // Указываем имя генерируемого ключа в верхнем регистре (для H2 надежнее "ID")
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"ID"});
             ps.setString(1, review.getContent());
             ps.setLong(2, review.getUserId());
@@ -54,7 +53,6 @@ public class ReviewDbStorage implements ReviewStorage {
             review.setReviewId(keyHolder.getKey().longValue());
         }
 
-        // При создании отзыва рейтинг равен нулю, как и требует ТЗ
         review.setUseful(0);
         return review;
     }
@@ -97,7 +95,6 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public Optional<Review> getReviewById(Long id) {
-        // Подтягиваем сумму из review_useful через LEFT JOIN. Если оценок нет, COALESCE вернет 0.
         String sql = GET_BY_ID_QUERY;
         try {
             Review review = jdbc.queryForObject(sql, this::mapRowToReview, id);
@@ -109,8 +106,6 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void addLike(Long id, Long userId, int like) {
-        // Используем MERGE (или UPSERT в зависимости от диалекта, для H2/PostgreSQL подходит MERGE или ON CONFLICT)
-        // В данном случае используем MERGE, так как он стандартен для H2 (который обычно в ТЗ)
         String sql = ADD_LIKE_QUERY;
         jdbc.update(sql, id, userId, like);
     }
@@ -128,7 +123,7 @@ public class ReviewDbStorage implements ReviewStorage {
         review.setIsPositive(rs.getBoolean("is_positive"));
         review.setUserId(rs.getLong("user_id"));
         review.setFilmId(rs.getLong("film_id"));
-        review.setUseful(rs.getInt("useful_rating")); // получаем вычисленный рейтинг
+        review.setUseful(rs.getInt("useful_rating"));
         return review;
     }
 }
