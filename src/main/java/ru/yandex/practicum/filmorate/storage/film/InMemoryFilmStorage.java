@@ -89,6 +89,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> findRecommendationsForUser(Long userId, Long matchUserId) {
         return Collections.emptyList();
     }
+
     @Override
     public void delete(Long id) {
         films.remove(id);
