@@ -98,6 +98,11 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
+    public Optional<Long> findBestMatchUserId(Long userId) {
+        return Optional.empty();
+    }
+
+    @Override
     public void delete(Long id) {
         users.remove(id);
         log.debug("Пользователь c id {} удалён", id);
