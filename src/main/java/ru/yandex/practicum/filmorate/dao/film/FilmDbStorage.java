@@ -87,6 +87,17 @@ public class FilmDbStorage implements FilmStorage {
                 WHERE l.user_id = ?
                 AND f.id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)
             """;
+    private static final String SEARCH_FILM_QUERY = """
+            SELECT f.*, m.name AS mpa_name, COUNT(l.user_id) AS likes_count
+            FROM films f
+            LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+            LEFT JOIN likes l ON f.id = l.film_id
+            LEFT JOIN film_directors fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            WHERE %s
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
+            ORDER BY likes_count DESC
+            """;
 
     @Override
     public Film add(Film film) {
@@ -299,5 +310,39 @@ public class FilmDbStorage implements FilmStorage {
             loadLikes(film);
         }
         return films;
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+        boolean byTitle = by.contains("title");
+        boolean byDirector = by.contains("director");
+
+        String searchQuery = "%" + query.toLowerCase() + "%";
+
+        List<Object> params = new ArrayList<>();
+        params.add(searchQuery);
+        if (byTitle && byDirector) {
+            params.add(searchQuery);
+        }
+
+        String sql = String.format(SEARCH_FILM_QUERY, buildSearchCondition(byTitle, byDirector));
+
+        List<Film> films = jdbc.query(sql, this::mapRowToFilm, params.toArray());
+        for (Film film : films) {
+            loadGenres(film);
+            loadDirectors(film);
+        }
+
+        return films;
+    }
+
+    private String buildSearchCondition(boolean byTitle, boolean byDirector) {
+        if (byTitle && byDirector) {
+            return "LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ?";
+        } else if (byTitle) {
+            return "LOWER(f.name) LIKE ?";
+        } else {
+            return "LOWER(d.name) LIKE ?";
+        }
     }
 }

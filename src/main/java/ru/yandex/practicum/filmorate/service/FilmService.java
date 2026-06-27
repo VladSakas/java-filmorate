@@ -145,4 +145,9 @@ public class FilmService {
         log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
     }
+
+    public List<Film> searchFilms(String query, List<String> by) {
+        log.info("Поиск фильма запрос:{}, фильтры: {}", query, by);
+        return filmStorage.searchFilms(query, by);
+    }
 }
