@@ -160,3 +160,51 @@ CREATE TABLE IF NOT EXISTS friends
 )
   ON DELETE CASCADE
     );
+CREATE TABLE IF NOT EXISTS directors
+(
+    id
+    INTEGER
+    GENERATED
+    BY
+    DEFAULT AS
+    IDENTITY
+    PRIMARY
+    KEY,
+    name
+    VARCHAR
+    NOT
+    NULL
+);
+
+CREATE TABLE IF NOT EXISTS film_directors
+(
+    film_id
+    BIGINT
+    NOT
+    NULL,
+    director_id
+    INTEGER
+    NOT
+    NULL,
+    PRIMARY
+    KEY
+(
+    film_id,
+    director_id
+),
+    FOREIGN KEY
+(
+    film_id
+) REFERENCES films
+(
+    id
+) ON DELETE CASCADE,
+    FOREIGN KEY
+(
+    director_id
+) REFERENCES directors
+(
+    id
+)
+  ON DELETE CASCADE
+    );
