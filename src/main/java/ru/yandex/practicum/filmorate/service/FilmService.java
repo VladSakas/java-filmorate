@@ -146,6 +146,12 @@ public class FilmService {
         return filmStorage.getCommonFilms(userId, friendId);
     }
 
+    public void delete(Long id) {
+        log.info("Удаление фильма с id {}", id);
+        filmStorage.getById(id);
+        filmStorage.delete(id);
+    }
+
     public List<Film> searchFilms(String query, List<String> by) {
         log.info("Поиск фильма запрос:{}, фильтры: {}", query, by);
         return filmStorage.searchFilms(query, by);

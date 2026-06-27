@@ -157,4 +157,10 @@ public class UserDbStorage implements UserStorage {
             return Optional.empty();
         }
     }
+
+    @Override
+    public void delete(Long id) {
+        String sql = REMOVE_QUERY;
+        jdbc.update(sql, id);
+    }
 }
