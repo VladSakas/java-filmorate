@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS review_useful (
     review_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     useful INTEGER NOT NULL,
-    CONSTRAINT pk_review_useful PRIMARY KEY (review_id, user_id),
-    CONSTRAINT fk_review_useful_review FOREIGN KEY (review_id) REFERENCES reviews (id) ON DELETE CASCADE,
-    CONSTRAINT fk_review_useful_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    PRIMARY KEY (review_id, user_id),
+    FOREIGN KEY (review_id) REFERENCES reviews (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
