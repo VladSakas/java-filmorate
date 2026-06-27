@@ -1,0 +1,68 @@
+package ru.yandex.practicum.filmorate.controller;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.service.ReviewService;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/reviews")
+@RequiredArgsConstructor
+public class ReviewController {
+
+    private final ReviewService reviewService;
+
+    @PostMapping
+    public Review addReview(@Valid @RequestBody Review review) {
+        return reviewService.addReview(review);
+    }
+
+    @PutMapping
+    public Review updateReview(@Valid @RequestBody Review review) {
+        return reviewService.updateReview(review);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteReview(@PathVariable Long id) {
+        reviewService.deleteReview(id);
+    }
+
+    @GetMapping("/{id}")
+    public Review getReviewById(@PathVariable Long id) {
+        return reviewService.getReviewById(id);
+    }
+
+    @GetMapping
+    public List<Review> getReviews(
+            @RequestParam(required = false) Long filmId,
+            @RequestParam(defaultValue = "10") @Positive int count
+    ) {
+        return reviewService.getReviews(filmId, count);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        reviewService.addLike(id, userId);
+    }
+
+    @PutMapping("/{id}/dislike/{userId}")
+    public void addDislike(@PathVariable Long id, @PathVariable Long userId) {
+        reviewService.addDislike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
+        reviewService.removeLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/dislike/{userId}")
+    public void removeDislike(@PathVariable Long id, @PathVariable Long userId) {
+        reviewService.removeLike(id, userId);
+    }
+}

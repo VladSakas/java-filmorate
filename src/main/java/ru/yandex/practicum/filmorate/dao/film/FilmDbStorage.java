@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -19,6 +20,7 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
+@Primary
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
 
