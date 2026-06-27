@@ -96,4 +96,10 @@ public class InMemoryUserStorage implements UserStorage {
                 .orElse(0);
         return ++currentMaxId;
     }
+
+    @Override
+    public void delete(Long id) {
+        users.remove(id);
+        log.debug("Пользователь c id {} удалён", id);
+    }
 }

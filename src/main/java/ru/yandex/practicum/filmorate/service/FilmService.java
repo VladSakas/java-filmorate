@@ -130,4 +130,10 @@ public class FilmService {
         log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
         return filmStorage.getCommonFilms(userId, friendId);
     }
+
+    public void delete(Long id) {
+        log.info("Удаление фильма с id {}", id);
+        filmStorage.getById(id);
+        filmStorage.delete(id);
+    }
 }

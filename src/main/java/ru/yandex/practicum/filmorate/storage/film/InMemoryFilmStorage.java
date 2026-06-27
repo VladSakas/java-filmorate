@@ -85,4 +85,9 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void delete(Long id) {
+        films.remove(id);
+        log.debug("Фильм c id = {} удалён", id);
+    }
 }

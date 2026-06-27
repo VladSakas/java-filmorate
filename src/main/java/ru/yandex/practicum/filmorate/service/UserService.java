@@ -97,4 +97,10 @@ public class UserService {
         }
         return userStorage.getCommonFriends(userId, otherId);
     }
+
+    public void delete(Long id) {
+        log.info("Удаление пользователя с id {}", id);
+        userStorage.getById(id);
+        userStorage.delete(id);
+    }
 }

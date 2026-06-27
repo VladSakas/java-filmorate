@@ -128,4 +128,10 @@ public class UserDbStorage implements UserStorage {
     public List<User> getCommonFriends(Long userId, Long otherId) {
         return jdbc.query(GET_COMMON_FRIENDS_QUERY, this::mapRowToUser, userId, otherId);
     }
+
+    @Override
+    public void delete(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        jdbc.update(sql, id);
+    }
 }
