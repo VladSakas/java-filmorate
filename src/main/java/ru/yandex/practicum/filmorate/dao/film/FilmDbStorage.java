@@ -94,6 +94,9 @@ public class FilmDbStorage implements FilmStorage {
             LEFT JOIN likes l ON f.id = l.film_id
             LEFT JOIN film_directors fd ON f.id = fd.film_id
             LEFT JOIN directors d ON fd.director_id = d.id
+            WHERE %s
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
+            ORDER BY likes_count DESC
             """;
 
     @Override
@@ -322,11 +325,7 @@ public class FilmDbStorage implements FilmStorage {
             params.add(searchQuery);
         }
 
-        String sql = SEARCH_FILM_QUERY + " WHERE " + buildSearchCondition(byTitle, byDirector)
-                + """
-                GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name
-                ORDER BY likes_count DESC
-                """;
+        String sql = String.format(SEARCH_FILM_QUERY, buildSearchCondition(byTitle, byDirector));
 
         List<Film> films = jdbc.query(sql, this::mapRowToFilm, params.toArray());
         for (Film film : films) {
