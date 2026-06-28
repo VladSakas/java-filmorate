@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -210,7 +211,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(Long filmId, Long userId) {
-        jdbc.update(ADD_LIKE_QUERY, filmId, userId);
+        try {
+            jdbc.update(ADD_LIKE_QUERY, filmId, userId);
+        } catch (DuplicateKeyException ignored) {
+        }
     }
 
     @Override
@@ -248,6 +252,7 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbc.query(sql.toString(), this::mapRowToFilm, params.toArray());
         for (Film film : films) {
             loadGenres(film);
+            loadDirectors(film);
             loadLikes(film);
         }
         return films;
@@ -316,8 +321,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void delete(Long id) {
-        String sql = REMOVE_FILM_QUERY;
-        jdbc.update(sql, id);
+        jdbc.update(REMOVE_FILM_QUERY, id);
     }
 
     @Override

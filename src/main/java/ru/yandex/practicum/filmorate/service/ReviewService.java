@@ -41,12 +41,12 @@ public class ReviewService {
     }
 
     public Review updateReview(Review review) {
-        getReviewById(review.getReviewId());
+        Review existing = getReviewById(review.getReviewId());
 
         Review updatedReview = reviewStorage.updateReview(review);
 
         eventService.createEvent(
-                review.getUserId(),
+                existing.getUserId(),
                 EventType.REVIEW,
                 Operation.UPDATE,
                 review.getReviewId()

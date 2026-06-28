@@ -9,8 +9,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.FilmValidator;
 
 import java.util.Collection;
@@ -20,8 +20,8 @@ import java.util.List;
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
+    private final DirectorStorage directorStorage;
 
     private static final String CHECK_MPA_EXISTS_QUERY =
             "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?";
@@ -29,11 +29,10 @@ public class FilmService {
             "SELECT COUNT(*) FROM genres WHERE id = ?";
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
-                       @Qualifier("userDbStorage") UserStorage userStorage,
-                       JdbcTemplate jdbcTemplate) {
+                       JdbcTemplate jdbcTemplate, DirectorStorage directorStorage) {
         this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
         this.jdbcTemplate = jdbcTemplate;
+        this.directorStorage = directorStorage;
     }
 
     public Film add(Film film) {
@@ -132,9 +131,12 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        if (directorStorage.getDirectorById(directorId).isEmpty()) {
+            throw new NotFoundException("Режиссёр с id " + directorId + " не найден");
+        }
         log.info("Получение фильмов режиссёра: directorId={}, sortBy={}", directorId, sortBy);
         if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
-            log.warn("Некорректный sortBy: {}", sortBy);
+            throw new ValidationException("Некорректный параметр sortBy: " + sortBy);
         }
         Collection<Film> films = filmStorage.getFilmsByDirector(directorId, sortBy);
         log.info("Найдено фильмов режиссёра {}: {}", directorId, films.size());
