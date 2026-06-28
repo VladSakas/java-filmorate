@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.UserValidator;
 
@@ -15,9 +17,12 @@ import java.util.Collection;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
+                       EventService eventService) {
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public User add(User user) {
@@ -67,6 +72,7 @@ public class UserService {
             throw new NotFoundException("Пользователь " + friendId + " не найден");
         }
         userStorage.addFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
         log.info("Пользователь {} добавил в друзья {}", userId, friendId);
     }
 
@@ -78,6 +84,7 @@ public class UserService {
             throw new NotFoundException("Пользователь " + friendId + " не найден");
         }
         userStorage.removeFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
         log.info("Пользователь {} удалил из друзей {}", userId, friendId);
     }
 
