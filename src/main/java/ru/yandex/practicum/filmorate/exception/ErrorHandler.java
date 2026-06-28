@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -35,6 +36,33 @@ public class ErrorHandler {
         return new ErrorResponse(
                 String.valueOf(HttpStatus.NOT_FOUND.value()),
                 e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingUserId(final MissingUserIdException e) {
+        log.warn("Ошибка: {}", e.getMessage());
+        return new ErrorResponse(
+                String.valueOf(HttpStatus.BAD_REQUEST.value()),
+                e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNoResource(final NoResourceFoundException e) {
+        String message = e.getMessage();
+        log.warn("Запрос к несуществующему ресурсу: {}", message);
+
+        if (message != null && message.contains("users/feed")) {
+            return new ErrorResponse(
+                    String.valueOf(HttpStatus.BAD_REQUEST.value()),
+                    "ID пользователя обязателен. Для получения ленты событий используйте: /users/{id}/feed"
+            );
+        }
+        return new ErrorResponse(
+                String.valueOf(HttpStatus.NOT_FOUND.value()),
+                "Запрашиваемый ресурс не существует"
+        );
     }
 
     @ExceptionHandler

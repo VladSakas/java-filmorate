@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -19,12 +21,21 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final EventService eventService;
 
     public Review addReview(Review review) {
         validateUserExists(review.getUserId());
         validateFilmExists(review.getFilmId());
 
         Review createdReview = reviewStorage.addReview(review);
+
+        eventService.createEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.ADD,
+                createdReview.getReviewId()
+        );
+
         log.info("Добавлен новый отзыв с ID: {}", createdReview.getReviewId());
         return createdReview;
     }
@@ -33,13 +44,29 @@ public class ReviewService {
         getReviewById(review.getReviewId());
 
         Review updatedReview = reviewStorage.updateReview(review);
+
+        eventService.createEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.UPDATE,
+                review.getReviewId()
+        );
+
         log.info("Обновлен отзыв с ID: {}", updatedReview.getReviewId());
         return updatedReview;
     }
 
     public void deleteReview(Long id) {
-        getReviewById(id);
+        Review review = getReviewById(id);
         reviewStorage.deleteReview(id);
+
+        eventService.createEvent(
+                review.getUserId(),
+                EventType.REVIEW,
+                Operation.REMOVE,
+                id
+        );
+
         log.info("Удален отзыв с ID: {}", id);
     }
 
