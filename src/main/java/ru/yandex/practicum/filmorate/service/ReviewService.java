@@ -19,8 +19,6 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
-    //private final FilmValidator filmValidator;
-    //private final UserValidator userValidator;
 
     public Review addReview(Review review) {
         validateUserExists(review.getUserId());
