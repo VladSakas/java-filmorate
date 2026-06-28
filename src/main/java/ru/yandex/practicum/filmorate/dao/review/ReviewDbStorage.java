@@ -24,24 +24,20 @@ public class ReviewDbStorage implements ReviewStorage {
             "INSERT INTO reviews (content, user_id, is_positive, film_id) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE reviews SET content = ?, is_positive = ? WHERE id = ?";
     private static final String DELETE_QUERY = "DELETE FROM reviews WHERE id = ?";
-    private static final String GET_BY_ID_QUERY =
+    private static final String GET_REVIEWS_QUERY =
             "SELECT r.*, COALESCE(SUM(ru.useful), 0) AS useful_rating " +
                     "FROM reviews r " +
-                    "LEFT JOIN review_useful ru ON r.id = ru.review_id " +
-                    "WHERE r.id = ? " +
-                    "GROUP BY r.id";
+                    "LEFT JOIN review_useful ru ON r.id = ru.review_id ";
     private static final String ADD_LIKE_QUERY =
             "MERGE INTO review_useful (review_id, user_id, useful) KEY (review_id, user_id) VALUES (?, ?, ?)";
     private static final String REMOVE_LIKE_QUERY = "DELETE FROM review_useful WHERE review_id = ? AND user_id = ?";
 
     @Override
     public Review addReview(Review review) {
-        String sql = ADD_QUERY;
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"ID"});
+            PreparedStatement ps = connection.prepareStatement(ADD_QUERY, new String[]{"ID"});
             ps.setString(1, review.getContent());
             ps.setLong(2, review.getUserId());
             ps.setBoolean(3, review.getIsPositive());
@@ -53,51 +49,47 @@ public class ReviewDbStorage implements ReviewStorage {
             review.setReviewId(keyHolder.getKey().longValue());
         }
 
-        review.setUseful(0);
         return review;
     }
 
     @Override
     public Review updateReview(Review review) {
-        String sql = UPDATE_QUERY;
-        jdbc.update(sql, review.getContent(), review.getIsPositive(), review.getReviewId());
+        jdbc.update(UPDATE_QUERY, review.getContent(), review.getIsPositive(), review.getReviewId());
 
         return getReviewById(review.getReviewId()).orElse(review);
     }
 
     @Override
     public void deleteReview(Long id) {
-        String sql = DELETE_QUERY;
-        jdbc.update(sql, id);
+        jdbc.update(DELETE_QUERY, id);
     }
 
     @Override
     public List<Review> getReviews(Long filmId, int count) {
-        String sql;
-        List<Review> reviews;
 
-        String baseSql = "SELECT r.*, COALESCE(SUM(ru.useful), 0) AS useful_rating " +
-                "FROM reviews r " +
-                "LEFT JOIN review_useful ru ON r.id = ru.review_id ";
+        StringBuilder sql = new StringBuilder(GET_REVIEWS_QUERY);
 
-        String endSql = "GROUP BY r.id ORDER BY useful_rating DESC LIMIT ?";
-
-        if (filmId == null) {
-            sql = baseSql + endSql;
-            reviews = jdbc.query(sql, this::mapRowToReview, count);
-        } else {
-            sql = baseSql + "WHERE r.film_id = ? " + endSql;
-            reviews = jdbc.query(sql, this::mapRowToReview, filmId, count);
+        if (filmId != null) {
+            sql.append("WHERE r.film_id = ? ");
         }
 
-        return reviews;
+        sql.append("GROUP BY r.id ORDER BY useful_rating DESC LIMIT ?");
+
+        if (filmId == null) {
+            return jdbc.query(sql.toString(), this::mapRowToReview, count);
+        } else {
+            return jdbc.query(sql.toString(), this::mapRowToReview, filmId, count);
+        }
     }
 
     @Override
     public Optional<Review> getReviewById(Long id) {
-        String sql = GET_BY_ID_QUERY;
+        StringBuilder sql = new StringBuilder(GET_REVIEWS_QUERY);
+        sql.append("WHERE r.id = ? " +
+                "GROUP BY r.id");
+
         try {
-            Review review = jdbc.queryForObject(sql, this::mapRowToReview, id);
+            Review review = jdbc.queryForObject(sql.toString(), this::mapRowToReview, id);
             return Optional.ofNullable(review);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -106,14 +98,12 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void addLike(Long id, Long userId, int like) {
-        String sql = ADD_LIKE_QUERY;
-        jdbc.update(sql, id, userId, like);
+        jdbc.update(ADD_LIKE_QUERY, id, userId, like);
     }
 
     @Override
     public void removeLike(Long id, Long userId) {
-        String sql = REMOVE_LIKE_QUERY;
-        jdbc.update(sql, id, userId);
+        jdbc.update(REMOVE_LIKE_QUERY, id, userId);
     }
 
     private Review mapRowToReview(ResultSet rs, int rowNum) throws SQLException {
