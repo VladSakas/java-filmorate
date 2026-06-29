@@ -62,7 +62,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getTopFilms(int count) {
+    public Collection<Film> getTopFilms(int count, Integer genreId, Integer year) {
         return films.values().stream()
                 .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
                 .limit(count)
@@ -76,5 +76,32 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
+    }
+
+    @Override
+    public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        return List.of();
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return films.values().stream()
+                .filter(film -> film.getLikes().contains(userId) && film.getLikes().contains(friendId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Film> findRecommendationsForUser(Long userId, Long matchUserId) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void delete(Long id) {
+        films.remove(id);
+        log.debug("Фильм c id = {} удалён", id);
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+        return List.of();
     }
 }

@@ -1,15 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.LikeService;
 
 import java.util.Collection;
+import java.util.List;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/films")
@@ -48,7 +47,31 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getTopFilms(count);
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "1000") int count,
+                                            @RequestParam(required = false) Integer genreId,
+                                            @RequestParam(required = false) Integer year) {
+        return filmService.getTopFilms(count, genreId, year);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<Film> getFilmsByDirector(@PathVariable Long directorId,
+                                               @RequestParam String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        filmService.delete(id);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam String query,
+                                  @RequestParam List<String> by) {
+        return filmService.searchFilms(query, by);
     }
 }

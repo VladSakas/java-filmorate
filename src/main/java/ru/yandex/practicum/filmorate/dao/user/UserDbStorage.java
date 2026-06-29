@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @Repository
 @Primary
 @RequiredArgsConstructor
@@ -40,10 +43,20 @@ public class UserDbStorage implements UserStorage {
             "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
     private static final String GET_FRIENDS_QUERY =
             "SELECT u.* FROM users u JOIN friends f ON u.id = f.friend_id WHERE f.user_id = ?";
-    private static final String GET_COMMON_FRIENDS_QUERY =
-            "SELECT u.* FROM users u " +
-                    "JOIN friends f1 ON u.id = f1.friend_id AND f1.user_id = ? " +
-                    "JOIN friends f2 ON u.id = f2.friend_id AND f2.user_id = ?";
+    private static final String GET_COMMON_FRIENDS_QUERY = """
+            SELECT u.* FROM users u
+            JOIN friends f1 ON u.id = f1.friend_id AND f1.user_id = ?
+            JOIN friends f2 ON u.id = f2.friend_id AND f2.user_id = ?
+            """;
+    private static final String FIND_BEST_MATCH_QUERY = """
+            SELECT l2.user_id, COUNT(*) as common_count
+            FROM likes l1
+            JOIN likes l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
+            WHERE l1.user_id = ?
+            GROUP BY l2.user_id
+            ORDER BY common_count DESC
+            LIMIT 1
+            """;
 
     @Override
     public User add(User user) {
@@ -90,9 +103,12 @@ public class UserDbStorage implements UserStorage {
     public Optional<User> getById(Long id) {
         try {
             User user = jdbc.queryForObject(FIND_BY_ID_QUERY, this::mapRowToUser, id);
-            loadFriends(user);
-            return Optional.of(user);
+            if (user != null) {
+                loadFriends(user);
+            }
+            return Optional.ofNullable(user);
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Пользователь с id {} не найден", id, e);
             return Optional.empty();
         }
     }
@@ -113,19 +129,46 @@ public class UserDbStorage implements UserStorage {
         user.getFriends().addAll(friends);
     }
 
+    @Override
     public void addFriend(Long userId, Long friendId) {
-        jdbc.update(ADD_FRIEND_QUERY, userId, friendId);
+        try {
+            jdbc.update(ADD_FRIEND_QUERY, userId, friendId);
+        } catch (DuplicateKeyException e) {
+            log.warn("Попытка повторно добавить друга: userId={}, friendId={}", userId, friendId, e);
+        }
     }
 
+    @Override
     public void removeFriend(Long userId, Long friendId) {
         jdbc.update(REMOVE_FRIEND_QUERY, userId, friendId);
     }
 
+    @Override
     public List<User> getFriends(Long userId) {
         return jdbc.query(GET_FRIENDS_QUERY, this::mapRowToUser, userId);
     }
 
+    @Override
     public List<User> getCommonFriends(Long userId, Long otherId) {
         return jdbc.query(GET_COMMON_FRIENDS_QUERY, this::mapRowToUser, userId, otherId);
+    }
+
+    @Override
+    public Optional<Long> findBestMatchUserId(Long userId) {
+        try {
+            return Optional.ofNullable(
+                    jdbc.queryForObject(FIND_BEST_MATCH_QUERY,
+                            (rs, rowNum) -> rs.getLong("user_id"),
+                            userId)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("Для пользователя {} не найдено совпадений", userId);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void delete(Long id) {
+        jdbc.update(REMOVE_QUERY, id);
     }
 }

@@ -3,9 +3,12 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.UserValidator;
 
@@ -15,9 +18,12 @@ import java.util.Collection;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
+                       EventService eventService) {
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public User add(User user) {
@@ -59,6 +65,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
     }
 
+    @Transactional
     public void addFriend(Long userId, Long friendId) {
         if (userStorage.getById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
@@ -67,9 +74,11 @@ public class UserService {
             throw new NotFoundException("Пользователь " + friendId + " не найден");
         }
         userStorage.addFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
         log.info("Пользователь {} добавил в друзья {}", userId, friendId);
     }
 
+    @Transactional
     public void removeFriend(Long userId, Long friendId) {
         if (userStorage.getById(userId).isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
@@ -78,6 +87,7 @@ public class UserService {
             throw new NotFoundException("Пользователь " + friendId + " не найден");
         }
         userStorage.removeFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
         log.info("Пользователь {} удалил из друзей {}", userId, friendId);
     }
 
@@ -96,5 +106,11 @@ public class UserService {
             throw new NotFoundException("Пользователь " + otherId + " не найден");
         }
         return userStorage.getCommonFriends(userId, otherId);
+    }
+
+    public void delete(Long id) {
+        log.info("Удаление пользователя с id {}", id);
+        userStorage.getById(id);
+        userStorage.delete(id);
     }
 }

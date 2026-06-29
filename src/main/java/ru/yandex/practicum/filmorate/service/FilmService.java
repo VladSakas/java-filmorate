@@ -4,22 +4,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.validator.FilmValidator;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
     private final JdbcTemplate jdbcTemplate;
+    private final DirectorStorage directorStorage;
 
     private static final String CHECK_MPA_EXISTS_QUERY =
             "SELECT COUNT(*) FROM mpa_ratings WHERE id = ?";
@@ -27,13 +30,13 @@ public class FilmService {
             "SELECT COUNT(*) FROM genres WHERE id = ?";
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
-                       @Qualifier("userDbStorage") UserStorage userStorage,
-                       JdbcTemplate jdbcTemplate) {
+                       JdbcTemplate jdbcTemplate, DirectorStorage directorStorage) {
         this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
         this.jdbcTemplate = jdbcTemplate;
+        this.directorStorage = directorStorage;
     }
 
+    @Transactional
     public Film add(Film film) {
         log.info("Добавление фильма: {}", film);
 
@@ -67,6 +70,7 @@ public class FilmService {
         return savedFilm;
     }
 
+    @Transactional
     public Film update(Film film) {
         log.info("Обновление фильма: {}", film);
 
@@ -121,7 +125,40 @@ public class FilmService {
         return films;
     }
 
-    public Collection<Film> getTopFilms(int count) {
-        return filmStorage.getTopFilms(count);
+    public Collection<Film> getTopFilms(int count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            log.warn("Запрос популярных фильмов: count={} не положительное число", count);
+            throw new ValidationException("Количество фильмов должно быть положительным числом");
+        }
+        return filmStorage.getTopFilms(count, genreId, year);
+    }
+
+    public Collection<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        if (directorStorage.getDirectorById(directorId).isEmpty()) {
+            throw new NotFoundException("Режиссёр с id " + directorId + " не найден");
+        }
+        log.info("Получение фильмов режиссёра: directorId={}, sortBy={}", directorId, sortBy);
+        if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
+            throw new ValidationException("Некорректный параметр sortBy: " + sortBy);
+        }
+        Collection<Film> films = filmStorage.getFilmsByDirector(directorId, sortBy);
+        log.info("Найдено фильмов режиссёра {}: {}", directorId, films.size());
+        return films;
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        log.info("Запрос общих фильмов пользователей id={} и id={}", userId, friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
+    public void delete(Long id) {
+        log.info("Удаление фильма с id {}", id);
+        filmStorage.getById(id);
+        filmStorage.delete(id);
+    }
+
+    public List<Film> searchFilms(String query, List<String> by) {
+        log.info("Поиск фильма запрос:{}, фильтры: {}", query, by);
+        return filmStorage.searchFilms(query, by);
     }
 }
