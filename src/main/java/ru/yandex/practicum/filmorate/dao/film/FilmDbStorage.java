@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -19,6 +20,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 @Primary
@@ -173,6 +175,7 @@ public class FilmDbStorage implements FilmStorage {
             }
             return Optional.ofNullable(film);
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Фильм с id {} не найден", id, e);
             return Optional.empty();
         }
     }
@@ -213,7 +216,8 @@ public class FilmDbStorage implements FilmStorage {
     public void addLike(Long filmId, Long userId) {
         try {
             jdbc.update(ADD_LIKE_QUERY, filmId, userId);
-        } catch (DuplicateKeyException ignored) {
+        } catch (DuplicateKeyException e) {
+            log.warn("Попытка повторно поставить лайк: filmId={}, userId={}", filmId, userId, e);
         }
     }
 
@@ -222,6 +226,7 @@ public class FilmDbStorage implements FilmStorage {
         jdbc.update(REMOVE_LIKE_QUERY, filmId, userId);
     }
 
+    @Override
     public Collection<Film> getTopFilms(int count, Integer genreId, Integer year) {
         StringBuilder sql = new StringBuilder(GET_TOP_FILMS_QUERY);
         List<Object> params = new ArrayList<>();
@@ -300,6 +305,7 @@ public class FilmDbStorage implements FilmStorage {
         );
     }
 
+    @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_QUERY, this::mapRowToFilm, userId, friendId);
         for (Film film : films) {

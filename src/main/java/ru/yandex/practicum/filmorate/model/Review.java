@@ -2,26 +2,23 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.experimental.FieldDefaults;
 
 @Data
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Review {
-    Long reviewId;
+    private Long reviewId;
 
     @NotBlank(message = "Отзыв не может быть пустым")
-    String content;
+    private String content;
 
     @NotNull(message = "Необходимо указать пользователя")
-    Long userId;
+    private Long userId;
 
     @NotNull(message = "Необходимо указать тип отзыва")
-    Boolean isPositive;
+    private Boolean isPositive;
 
     @NotNull(message = "Необходимо указать фильм")
-    Long filmId;
+    private Long filmId;
 
-    int useful = 0;
+    private int useful = 0;
 }

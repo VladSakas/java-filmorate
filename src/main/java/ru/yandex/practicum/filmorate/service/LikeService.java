@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dao.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
@@ -17,6 +18,7 @@ public class LikeService {
     private final UserStorage userStorage;
     private final EventService eventService;
 
+    @Transactional
     public void addLike(Long filmId, Long userId) {
         validateFilmExists(filmId);
         validateUserExists(userId);
@@ -25,6 +27,7 @@ public class LikeService {
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
+    @Transactional
     public void removeLike(Long filmId, Long userId) {
         validateFilmExists(filmId);
         validateUserExists(userId);

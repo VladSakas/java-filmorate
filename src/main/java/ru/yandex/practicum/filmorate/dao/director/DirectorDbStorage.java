@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao.director;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class DirectorDbStorage implements DirectorStorage {
@@ -43,6 +45,7 @@ public class DirectorDbStorage implements DirectorStorage {
     public Director updateDirector(Director director) {
         int updatedRows = jdbc.update(UPDATE_QUERY, director.getName(), director.getId());
         if (updatedRows == 0) {
+            log.error("Попытка обновить несуществующего режиссера с id={}", director.getId());
             throw new NotFoundException("Режиссер не найден с id=" + director.getId());
         }
         return getDirectorById(director.getId()).orElseThrow();
@@ -50,7 +53,10 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public void removeDirector(Long id) {
-        jdbc.update(DELETE_QUERY, id);
+        int deletedRows = jdbc.update(DELETE_QUERY, id);
+        if (deletedRows == 0) {
+            log.warn("Попытка удалить несуществующего режиссера с id={}", id);
+        }
     }
 
     @Override
@@ -64,6 +70,7 @@ public class DirectorDbStorage implements DirectorStorage {
             }, id);
             return Optional.ofNullable(director);
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Режиссер с id {} не найден", id, e);
             return Optional.empty();
         }
     }

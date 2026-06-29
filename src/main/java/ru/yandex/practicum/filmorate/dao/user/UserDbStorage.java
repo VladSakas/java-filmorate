@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @Repository
 @Primary
 @RequiredArgsConstructor
@@ -105,6 +108,7 @@ public class UserDbStorage implements UserStorage {
             }
             return Optional.ofNullable(user);
         } catch (EmptyResultDataAccessException e) {
+            log.warn("Пользователь с id {} не найден", id, e);
             return Optional.empty();
         }
     }
@@ -127,7 +131,11 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(Long userId, Long friendId) {
-        jdbc.update(ADD_FRIEND_QUERY, userId, friendId);
+        try {
+            jdbc.update(ADD_FRIEND_QUERY, userId, friendId);
+        } catch (DuplicateKeyException e) {
+            log.warn("Попытка повторно добавить друга: userId={}, friendId={}", userId, friendId, e);
+        }
     }
 
     @Override
@@ -154,13 +162,13 @@ public class UserDbStorage implements UserStorage {
                             userId)
             );
         } catch (EmptyResultDataAccessException e) {
+            log.debug("Для пользователя {} не найдено совпадений", userId);
             return Optional.empty();
         }
     }
 
     @Override
     public void delete(Long id) {
-        String sql = REMOVE_QUERY;
-        jdbc.update(sql, id);
+        jdbc.update(REMOVE_QUERY, id);
     }
 }

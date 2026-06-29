@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
@@ -23,6 +24,7 @@ public class ReviewService {
     private final FilmStorage filmStorage;
     private final EventService eventService;
 
+    @Transactional
     public Review addReview(Review review) {
         validateUserExists(review.getUserId());
         validateFilmExists(review.getFilmId());
@@ -40,6 +42,7 @@ public class ReviewService {
         return createdReview;
     }
 
+    @Transactional
     public Review updateReview(Review review) {
         Review existing = getReviewById(review.getReviewId());
 
@@ -56,6 +59,7 @@ public class ReviewService {
         return updatedReview;
     }
 
+    @Transactional
     public void deleteReview(Long id) {
         Review review = getReviewById(id);
         reviewStorage.deleteReview(id);
@@ -79,7 +83,6 @@ public class ReviewService {
     }
 
     public List<Review> getReviews(Long filmId, int count) {
-
         if (filmId != null) {
             validateFilmExists(filmId);
         }

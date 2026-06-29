@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -35,6 +36,7 @@ public class FilmService {
         this.directorStorage = directorStorage;
     }
 
+    @Transactional
     public Film add(Film film) {
         log.info("Добавление фильма: {}", film);
 
@@ -68,6 +70,7 @@ public class FilmService {
         return savedFilm;
     }
 
+    @Transactional
     public Film update(Film film) {
         log.info("Обновление фильма: {}", film);
 

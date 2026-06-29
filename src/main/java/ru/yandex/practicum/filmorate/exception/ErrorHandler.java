@@ -41,7 +41,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMissingUserId(final MissingUserIdException e) {
-        log.warn("Ошибка: {}", e.getMessage());
+        log.error("Ошибка: {}", e.getMessage());
         return new ErrorResponse(
                 String.valueOf(HttpStatus.BAD_REQUEST.value()),
                 e.getMessage());
@@ -51,7 +51,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleNoResource(final NoResourceFoundException e) {
         String message = e.getMessage();
-        log.warn("Запрос к несуществующему ресурсу: {}", message);
+        log.error("Запрос к несуществующему ресурсу: {}", message);
 
         if (message != null && message.contains("users/feed")) {
             return new ErrorResponse(
